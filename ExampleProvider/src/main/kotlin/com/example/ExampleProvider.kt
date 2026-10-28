@@ -77,7 +77,8 @@ class ExampleProvider : MainAPI() {
                         // 🚨 THIS PRINTS THE DIRECT LINK TO THE CLOUDSTREAM LOG 🚨
                         println("MY_VIDEO_LINK: ${link.url}") 
                         
-                        callback(link.copy(name = link.name)) 
+                        // Pass the link directly without copy()
+                        callback(link) 
                     }
                 }
             } catch (e: Exception) {
