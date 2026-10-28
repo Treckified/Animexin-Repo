@@ -5,12 +5,14 @@ import com.lagradost.cloudstream3.utils.*
 import org.jsoup.nodes.Element
 
 class ExampleProvider : MainAPI() {
-    override var mainUrl = "https://animexin.dev" 
+    // The new Animexin domain
+    override var mainUrl = "https://animexin.dev"
     override var name = "Animexin"
     override val hasMainPage = true
     override var lang = "en"
     override val supportedTypes = setOf(TvType.Anime, TvType.AnimeMovie)
 
+    // 1. Search Function
     override suspend fun search(query: String): List<SearchResponse>? {
         val document = app.get("$mainUrl/?s=$query").document
         return document.select("article.bs").mapNotNull { it.toSearchResult() }
@@ -26,6 +28,7 @@ class ExampleProvider : MainAPI() {
         }
     }
 
+    // 2. Load Episodes Function
     override suspend fun load(url: String): LoadResponse? {
         val document = app.get(url).document
         val title = document.selectFirst("h1")?.text() ?: return null
@@ -43,12 +46,14 @@ class ExampleProvider : MainAPI() {
         }
 
         return newAnimeLoadResponse(title, url, TvType.Anime) {
-    this.posterUrl = poster
-    this.plot = description
-    this.episodes = mutableMapOf(DubStatus.Subbed to episodes)
+            this.posterUrl = poster
+            this.plot = description
+            // This syntax fixes the build error we had earlier
+            this.episodes = mutableMapOf(DubStatus.Subbed to episodes)
         }
     }
 
+    // 3. Stream & Download Links Function
     override suspend fun loadLinks(
         data: String,
         isCasting: Boolean,
@@ -57,46 +62,30 @@ class ExampleProvider : MainAPI() {
     ): Boolean {
         val document = app.get(data).document
 
+        // Find the video player iframe
         val embedUrl = document.selectFirst("div.player-embed iframe")?.attr("src")
         
         if (embedUrl != null) {
-            loadExtractor(embedUrl, mainUrl, subtitleCallback, callback)
-            
             try {
+                // Fetch the HTML of the video player
                 val embedHtml = app.get(embedUrl).text
+                
+                // Hunt for the hidden .m3u8 link
                 val m3u8Regex = Regex("""(https?://[^\s"']+\.m3u8[^\s"']*)""")
                 val m3u8Url = m3u8Regex.find(embedHtml)?.value
 
                 if (m3u8Url != null) {
-                    val m3u8Content = app.get(m3u8Url).text
-                    val lines = m3u8Content.lines()
-                    var currentQuality = Qualities.Unknown.value
-                    
-                    for (line in lines) {
-                        if (line.contains("RESOLUTION=")) {
-                            val resolutionRegex = Regex("""RESOLUTION=\d+x(\d+)""")
-                            val res = resolutionRegex.find(line)?.groupValues?.get(1)?.toIntOrNull()
-                            currentQuality = when (res) {
-                                360 -> Qualities.P360.value
-                                480 -> Qualities.P480.value
-                                720 -> Qualities.P720.value
-                                1080 -> Qualities.P1080.value
-                                else -> Qualities.Unknown.value
-                            }
-                        } else if (line.startsWith("http") && currentQuality != Qualities.Unknown.value) {
-                            callback(
-                                newExtractorLink(
-                                    source = this.name,
-                                    name = "Animexin Stream - ${currentQuality}p",
-                                    url = line,
-                                    type = ExtractorLinkType.M3U8
-                                ) {
-                                    this.referer = mainUrl
-                                    this.quality = currentQuality
-                                }
-                            )
-                            currentQuality = Qualities.Unknown.value
-                        }
+                    // Use CloudStream's built-in helper to split the m3u8 into qualities (360p, 480p, 720p, etc.)
+                    val m3u8Helper = M3u8Helper().generateM3u8(
+                        source = this.name,
+                        streamUrl = m3u8Url,
+                        referer = mainUrl,
+                        headers = mapOf("Referer" to mainUrl)
+                    )
+
+                    // Send every quality to the player/downloader
+                    m3u8Helper.forEach { link ->
+                        callback(link)
                     }
                 }
             } catch (e: Exception) {
