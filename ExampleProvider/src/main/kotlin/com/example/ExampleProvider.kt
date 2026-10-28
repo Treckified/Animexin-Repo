@@ -5,7 +5,6 @@ import com.lagradost.cloudstream3.utils.*
 import org.jsoup.nodes.Element
 
 class ExampleProvider : MainAPI() {
-    // The new Animexin domain
     override var mainUrl = "https://animexin.dev"
     override var name = "Animexin"
     override val hasMainPage = true
@@ -48,7 +47,6 @@ class ExampleProvider : MainAPI() {
         return newAnimeLoadResponse(title, url, TvType.Anime) {
             this.posterUrl = poster
             this.plot = description
-            // This syntax fixes the build error we had earlier
             this.episodes = mutableMapOf(DubStatus.Subbed to episodes)
         }
     }
@@ -62,31 +60,22 @@ class ExampleProvider : MainAPI() {
     ): Boolean {
         val document = app.get(data).document
 
-        // Find the video player iframe
         val embedUrl = document.selectFirst("div.player-embed iframe")?.attr("src")
         
         if (embedUrl != null) {
             try {
-                // Fetch the HTML of the video player
                 val embedHtml = app.get(embedUrl).text
-                
-                // Hunt for the hidden .m3u8 link
                 val m3u8Regex = Regex("""(https?://[^\s"']+\.m3u8[^\s"']*)""")
                 val m3u8Url = m3u8Regex.find(embedHtml)?.value
 
                 if (m3u8Url != null) {
-                    // Use CloudStream's built-in helper to split the m3u8 into qualities (360p, 480p, 720p, etc.)
-                    val m3u8Helper = M3u8Helper().generateM3u8(
+                    // ✅ THE FIX: M3u8Helper is a static object, so we call it without ()
+                    M3u8Helper.generateM3u8(
                         source = this.name,
                         streamUrl = m3u8Url,
                         referer = mainUrl,
                         headers = mapOf("Referer" to mainUrl)
-                    )
-
-                    // Send every quality to the player/downloader
-                    m3u8Helper.forEach { link ->
-                        callback(link)
-                    }
+                    ).forEach(callback)
                 }
             } catch (e: Exception) {
                 println("M3U8 parsing failed: ${e.message}")
