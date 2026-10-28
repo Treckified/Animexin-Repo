@@ -64,6 +64,27 @@ class ExampleProvider : MainAPI() {
         if (embedUrl != null) {
             try {
                 val embedHtml = app.get(embedUrl).text
+                
+                // First, try to find a direct MP4 link (CloudStream downloads these perfectly)
+                val mp4Regex = Regex("""(https?://[^\s"']+\.mp4[^\s"']*)""")
+                val mp4Url = mp4Regex.find(embedHtml)?.value
+                
+                if (mp4Url != null) {
+                    callback(
+                        newExtractorLink(
+                            source = this.name,
+                            name = "Animexin Direct MP4",
+                            url = mp4Url,
+                            type = ExtractorLinkType.VIDEO
+                        ) {
+                            this.referer = mainUrl
+                            this.quality = Qualities.Unknown.value
+                        }
+                    )
+                    return true
+                }
+
+                // If no MP4, fall back to m3u8
                 val m3u8Regex = Regex("""(https?://[^\s"']+\.m3u8[^\s"']*)""")
                 val m3u8Url = m3u8Regex.find(embedHtml)?.value
 
@@ -74,15 +95,15 @@ class ExampleProvider : MainAPI() {
                         referer = mainUrl,
                         headers = mapOf("Referer" to mainUrl)
                     ).forEach { link ->
-                        // 🚨 THIS PRINTS THE DIRECT LINK TO THE CLOUDSTREAM LOG 🚨
+                        // Prints the direct link to the logs for 1DM
                         println("MY_VIDEO_LINK: ${link.url}") 
                         
-                        // Pass the link directly without copy()
+                        // Pass the link directly to CloudStream
                         callback(link) 
                     }
                 }
             } catch (e: Exception) {
-                println("M3U8 parsing failed: ${e.message}")
+                println("Parsing failed: ${e.message}")
             }
         }
         return true
