@@ -42,10 +42,9 @@ class ExampleProvider : MainAPI() {
             }
         }
 
-        return newAnimeLoadResponse(title, url, TvType.Anime) {
-            this.posterUrl = poster
-            this.plot = description
-            this.addEpisodes(episodes)
+        return newAnimeLoadResponse(title, url, TvType.Anime, episodes = episodes) {
+        this.posterUrl = poster
+        this.plot = description
         }
     }
 
