@@ -13,10 +13,10 @@
             "Anime",
             "AnimeMovie"
         ],
-        "version": 1,
+        "version": 2,
         "internalName": "ExampleProvider",
         "description": "Animexin multi-quality plugin",
         "url": "https://raw.githubusercontent.com/Treckified/Animexin-Repo/builds/ExampleProvider.cs3",
-        "name": "ExampleProvider"
+        "name": "Animexin"
     }
 ]
