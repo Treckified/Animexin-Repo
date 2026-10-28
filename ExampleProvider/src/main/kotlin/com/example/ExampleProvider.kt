@@ -59,7 +59,6 @@ class ExampleProvider : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val document = app.get(data).document
-
         val embedUrl = document.selectFirst("div.player-embed iframe")?.attr("src")
         
         if (embedUrl != null) {
@@ -69,13 +68,17 @@ class ExampleProvider : MainAPI() {
                 val m3u8Url = m3u8Regex.find(embedHtml)?.value
 
                 if (m3u8Url != null) {
-                    // ✅ THE FIX: M3u8Helper is a static object, so we call it without ()
                     M3u8Helper.generateM3u8(
                         source = this.name,
                         streamUrl = m3u8Url,
                         referer = mainUrl,
                         headers = mapOf("Referer" to mainUrl)
-                    ).forEach(callback)
+                    ).forEach { link ->
+                        // 🚨 THIS PRINTS THE DIRECT LINK TO THE CLOUDSTREAM LOG 🚨
+                        println("MY_VIDEO_LINK: ${link.url}") 
+                        
+                        callback(link.copy(name = link.name)) 
+                    }
                 }
             } catch (e: Exception) {
                 println("M3U8 parsing failed: ${e.message}")
