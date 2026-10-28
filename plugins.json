@@ -1,0 +1,22 @@
+[
+    {
+        "fileHash": "sha256-73e58952ddba8b72441f4d3cdbd572517ad25933aa24653af737b10edf08261e",
+        "apiVersion": 1,
+        "repositoryUrl": "https://github.com/Treckified/Animexin-Repo",
+        "fileSize": 14399,
+        "status": 1,
+        "language": "en",
+        "authors": [
+            "Treckified"
+        ],
+        "tvTypes": [
+            "Anime",
+            "AnimeMovie"
+        ],
+        "version": 1,
+        "internalName": "ExampleProvider",
+        "description": "Animexin multi-quality plugin",
+        "url": "https://raw.githubusercontent.com/Treckified/Animexin-Repo/builds/ExampleProvider.cs3",
+        "name": "ExampleProvider"
+    }
+]

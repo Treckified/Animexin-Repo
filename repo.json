@@ -1,0 +1,8 @@
+{
+  "name": "Treckified Animexin Repo",
+  "description": "Animexin plugin with multi-quality downloads",
+  "manifestVersion": 1,
+  "pluginLists": [
+    "https://raw.githubusercontent.com/Treckified/Animexin-Repo/builds/plugins.json"
+  ]
+}
